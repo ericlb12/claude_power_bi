@@ -1,0 +1,20 @@
+# Config MCP real (contiene ruta personal del binario)
+.mcp.json
+
+# Modelos de Power BI — nunca commitear datos
+*.pbix
+*.pbip
+*.pbit
+
+# Carpetas de proyecto PBIP generadas
+*.Dataset/
+*.Report/
+*.SemanticModel/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (script de mantenimiento)
+node_modules/
