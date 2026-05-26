@@ -39,23 +39,32 @@ modificarlo previa aprobación explícita.
 5. File → Save as → seleccionar tipo "Power BI Project files (.pbip)".
 6. Guardar en una ruta dentro del repo de este setup (o referenciada desde él).
 
-## Fase 2 — Instalar el MCP server
+## Fase 2 — Configurar el MCP server (vía npx, sin VS Code)
 
-1. Abrir VS Code → Extensions.
-2. Buscar "Power BI Modeling MCP Server" (publisher: `analysis-services`).
-3. Instalar.
-4. Verificar que el binario existe. La ruta sigue el patrón:
-   `C:\Users\<USUARIO>\.vscode\extensions\analysis-services.powerbi-modeling-mcp-<VERSION>-win32-x64\server\powerbi-modeling-mcp.exe`
-5. Anotar la versión exacta instalada — se usará en la config.
-6. (VS Code ya no se vuelve a tocar después de esto.)
+Microsoft publica el server en npm (`@microsoft/powerbi-modeling-mcp`). Como Node.js
+ya está instalado, no hace falta VS Code ni descargar binarios: `npx` baja y ejecuta
+la última versión automáticamente.
 
-## Fase 3 — Configurar Claude Code
+1. Copiar `.mcp.json.example` a `.mcp.json` en la raíz del proyecto (ya está listo,
+   sin placeholders que rellenar):
+   ```json
+   {
+     "mcpServers": {
+       "powerbi-modeling-mcp": {
+         "type": "stdio",
+         "command": "npx",
+         "args": ["-y", "@microsoft/powerbi-modeling-mcp@latest", "--start"]
+       }
+     }
+   }
+   ```
+2. `.mcp.json` va en `.gitignore` igualmente; se versiona solo `.mcp.json.example`.
 
-1. Copiar `.mcp.json.example` a `.mcp.json` en la raíz del proyecto.
-2. Sustituir `<USUARIO>` y `<VERSION>` por valores reales.
-3. Usar dobles backslashes en las rutas (JSON las requiere).
-4. `.mcp.json` real va en `.gitignore` (contiene la ruta personal); se commitea solo
-   `.mcp.json.example`.
+> **Alternativa sin Node** (si npx diera problemas): instalar la extensión "Power BI
+> Modeling MCP Server" (publisher `analysis-services`) en VS Code, o descargar el VSIX
+> del Marketplace, renombrarlo a `.zip`, extraerlo y apuntar `command` al
+> `powerbi-modeling-mcp.exe`. Es el camino antiguo y exige re-apuntar la ruta tras cada
+> actualización; usar solo como fallback.
 
 ## Fase 4 — Verificar la conexión
 
@@ -64,9 +73,9 @@ modificarlo previa aprobación explícita.
 3. Ejecutar el comando `/mcp` dentro de Claude Code.
 4. Confirmar que `powerbi-modeling-mcp` aparece con estado "connected" en verde.
 5. Si no aparece:
-   - Verificar que la ruta del `.exe` existe:
-     `dir "C:\Users\<USUARIO>\.vscode\extensions\analysis-services.powerbi-modeling-mcp-*"`
-   - Verificar que el JSON es válido (sin comas colgantes, backslashes dobles).
+   - Verificar que Node.js está instalado (`node --version`, `npx --version`).
+   - La primera ejecución de `npx` descarga el paquete; puede tardar unos segundos.
+   - Verificar que el JSON es válido (sin comas colgantes).
    - Confirmar que Claude Code se lanzó desde la carpeta correcta.
 
 ## Fase 5 — Prueba humo
@@ -80,15 +89,10 @@ Con Power BI Desktop abierto y el `.pbip` cargado, pedirle a Claude Code:
 
 Si los cuatro funcionan, el setup está listo.
 
-## Fase 6 — Script de mantenimiento (version-pinning)
-
-**PROBLEMA:** VS Code auto-actualiza la extensión y la versión en la ruta cambia,
-rompiendo `.mcp.json`.
-
-**SOLUCIÓN:** [`scripts/update-mcp-path.ps1`](scripts/update-mcp-path.ps1) busca la
-carpeta de extensión más reciente que coincida con el patrón, reconstruye la ruta al
-`.exe` y reescribe el campo `command` en `.mcp.json`. Ejecutarlo después de cada
-actualización de VS Code. Lanzador de un click: `scripts/update-mcp-path.bat`.
+> **Versionado:** con `npx ... @latest` el server se auto-actualiza en cada arranque,
+> así que no hay ruta versionada que mantener (el viejo script `update-mcp-path.ps1` ya
+> no es necesario y se eliminó). Si quieres fijar una versión concreta, sustituye
+> `@latest` por `@x.y.z` en `.mcp.json`.
 
 ## Cuando consigas acceso al tenant
 
@@ -104,12 +108,12 @@ Tener listo este repo para activar las Opciones A y B (ambas dan acceso a modelo
 claude_power_bi/
 ├── README.md                     ← este plan
 ├── CLAUDE.md                     ← reglas de seguridad para Claude Code
-├── .mcp.json.example             ← plantilla sin datos personales
-├── .gitignore                    ← .mcp.json real, *.pbix, *.pbip
-├── scripts/
-│   ├── update-mcp-path.ps1       ← version-pinning (Fase 6)
-│   └── update-mcp-path.bat       ← lanzador de un click
+├── .mcp.json.example             ← plantilla npx (sin placeholders)
+├── .gitignore                    ← .mcp.json real, *.pbix, *.pbip, modelo
 └── docs/
     ├── opcion-a-remote-oficial.md
     └── opcion-b-plugin-comunidad.md
 ```
+
+El modelo en `.pbip` + `*.SemanticModel/` + `*.Report/` se trabaja localmente pero
+no se versiona (está en `.gitignore` — contiene datos de negocio).

@@ -16,8 +16,8 @@ Este repo configura el **Power BI Modeling MCP** local contra Power BI Desktop.
 
 ## Convenciones del repo
 
-- La config MCP real (`.mcp.json`) está en `.gitignore` porque contiene la ruta
-  personal del binario. Solo se versiona `.mcp.json.example`.
-- Archivos `.pbix` y `.pbip` NO se commitean (`.gitignore`).
-- Tras cualquier actualización de VS Code que cambie la versión de la extensión,
-  ejecutar `scripts/update-mcp-path.ps1` para re-apuntar la ruta del binario.
+- El server MCP se lanza vía `npx @microsoft/powerbi-modeling-mcp@latest` (no requiere
+  VS Code ni binario local). Solo se versiona `.mcp.json.example`; el `.mcp.json` real
+  está en `.gitignore`.
+- Archivos `.pbix`, `.pbip` y las carpetas `*.SemanticModel/` / `*.Report/` NO se
+  commitean (`.gitignore`) — contienen datos de negocio y el repo es público.
