@@ -18,3 +18,6 @@ desktop.ini
 
 # Node (script de mantenimiento)
 node_modules/
+
+# Temporales del MCP
+.mcp.json.tmp.*

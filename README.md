@@ -19,12 +19,50 @@ Que Claude Code pueda leer el contexto (tablas, columnas, relaciones, medidas, D
 de un modelo de Power BI abierto localmente en Power BI Desktop, y opcionalmente
 modificarlo previa aprobación explícita.
 
+> **Estado: FUNCIONANDO (2026-05-26).** Setup verificado end-to-end en Windows +
+> PowerShell con el modelo PETRAMORA (60 tablas, 214 medidas). Para el uso diario, ver
+> la sección [**Cómo usarlo**](#cómo-usarlo-día-a-día) más abajo.
+
 ## Pre-requisitos a verificar
 
 1. Power BI Desktop instalado y actualizado.
-2. Visual Studio Code instalado (solo como vehículo para obtener el binario MCP).
-3. Node.js LTS instalado (lo usaremos para el script de mantenimiento).
-4. Una **COPIA** del `.pbix` con el que vamos a trabajar — nunca el de producción.
+2. Node.js LTS instalado (`node --version` / `npx --version` deben responder). El server
+   MCP se ejecuta vía `npx`; no hace falta VS Code.
+3. Una **COPIA** del `.pbix` con el que vamos a trabajar — nunca el de producción.
+
+## Cómo usarlo (día a día)
+
+Una vez completado el setup (Fases 1–4), para una sesión de trabajo:
+
+1. **Abre Power BI Desktop** con tu modelo `.pbip` cargado y déjalo abierto. El MCP se
+   conecta a esa instancia viva, así que Desktop tiene que estar corriendo.
+   - Evita tener **dos instancias** del mismo modelo abiertas: el MCP lista todas y hay
+     que elegir el puerto correcto. Cierra duplicadas para no confundirte.
+2. **Lanza Claude Code desde la carpeta del repo** (PowerShell):
+   ```powershell
+   cd "C:\Users\<USUARIO>\...\claude_power_bi"
+   $env:MCP_TIMEOUT=120000   # margen para el primer arranque (descarga del binario)
+   claude
+   ```
+   > El `.mcp.json` es **scoped a la carpeta**: si lanzas Claude desde otra carpeta, el
+   > server no se carga. El `MCP_TIMEOUT` solo hace falta la primera vez (caché en frío);
+   > después puedes omitirlo.
+3. Verifica con `/mcp` que `powerbi-modeling-mcp` está **connected** (verde).
+4. Pídele en lenguaje natural. Ejemplos reales que funcionan:
+   - *"Conéctate a `<NombreModelo>` en Power BI Desktop y dame un resumen: nº de tablas y medidas."*
+   - *"Lista todas las tablas con sus columnas y medidas."*
+   - *"Enséñame el DAX de la medida `<X>` y explícame qué hace."*
+   - *"Genera un diagrama mermaid de las relaciones entre tablas."*
+   - *"Busca medidas duplicadas o DAX ineficiente."*
+
+### Seguridad al usarlo
+
+- El server arranca en modo **ReadWrite**: puede crear/editar medidas, columnas y
+  relaciones. Las **reglas de aprobación** están en [`CLAUDE.md`](CLAUDE.md) — Claude debe
+  mostrar el plan y esperar tu confirmación antes de cualquier cambio.
+- Las consultas de **solo lectura** (resúmenes, listar, leer DAX) no requieren confirmación.
+- Auth `InteractiveBrowser`: la primera conexión puede abrir el navegador para login de
+  Microsoft. Para un modelo local normalmente no hace falta, pero si lo pide, usa tu cuenta.
 
 ## Fase 1 — Preparar Power BI Desktop
 
